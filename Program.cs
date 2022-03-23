@@ -1,6 +1,5 @@
 using Backend_Recyclo_dotnet.Models;
 using Microsoft.EntityFrameworkCore;
-using Backend_Recyclo_dotnet.Controller;
 
 
 Random random = new Random();
