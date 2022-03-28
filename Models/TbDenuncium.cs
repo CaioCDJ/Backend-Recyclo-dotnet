@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
 
 namespace Backend_Recyclo_dotnet.Models
 {
@@ -8,7 +8,8 @@ namespace Backend_Recyclo_dotnet.Models
         public int CdDenuncia { get; set; }
         public string? NmLogradouro { get; set; }
         public string? DsComentario { get; set; }
-        public DateOnly? DtDenuncia { get; set; }
+        [Column(TypeName="DateOnly")]
+        public DateTime? DtDenuncia { get; set; }
         public int FkCdDiscarteIlegal { get; set; }
         public int FkCdUsuario { get; set; }
 
