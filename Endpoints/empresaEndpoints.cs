@@ -9,9 +9,6 @@ namespace Backend_Recyclo_dotnet.Endpoints
     {
         public static void MapEmpresaEndpoints(this WebApplication app)
         {
-            Random ramdom = new Random();
-            int verificacao = 0;
-
             // empresa by id
             app.MapGet("/empresa/{id}", async (dct8nq053j6k6dContext context,int id) =>
             {
@@ -44,16 +41,9 @@ namespace Backend_Recyclo_dotnet.Endpoints
 
                 try{
 
-                    if(await context.TbEmpresas.FirstOrDefaultAsync(x =>x.CdCnpj== empresaView.CdCnpj) == null)
+                    if(await context.TbEmpresas.FirstOrDefaultAsync(x =>x.CdCnpj == empresaView.CdCnpj 
+                        || x.NmEmail == empresaView.NmEmail) == null)
                     {
-                        // gerando id para o usuario
-                        while (true)
-                        {
-                            verificacao = ramdom.Next(999999999);
-                            var verificaUser = await context.TbEmpresas.FirstOrDefaultAsync(x=>x.CdEmpresa== verificacao);
-                            if(verificaUser is null)
-                                break;
-                        }
                         await context.TbEmpresas.AddAsync(
                             new TbEmpresa(){
                                 CdCnpj = empresaView.CdCnpj,
@@ -61,7 +51,7 @@ namespace Backend_Recyclo_dotnet.Endpoints
                                 CdSenhaEmpresa = empresaView.CdSenhaEmpresa,
                                 NmEmail= empresaView.NmEmail,
                                 CdTelefone = empresaView.CdTelefone,
-                                CdEmpresa = verificacao 
+                                CdEmpresa = ID.newID(ID.Tabela.empresa) 
                             }
                         );
                         await context.SaveChangesAsync();
@@ -114,11 +104,107 @@ namespace Backend_Recyclo_dotnet.Endpoints
                 {
                     context.TbEmpresas.Remove(empresa);
                     await context.SaveChangesAsync();
-                    return Results.Ok("Usuario Deletado");
+                    return Results.Ok("Conta Deletado");
                 }
                 else
-                    return Results.NotFound("usuario nao encontrado");
+                    return Results.NotFound("Conta nao encontrado");
             });           
+
+            // PONTOS DE COLETA
+
+            // pontos
+            app.MapGet("/pontos", async (dct8nq053j6k6dContext context)=>
+                await context.TbPontoColeta.ToListAsync());
+            
+            // pontos de uma conta
+            app.MapGet("/pontos/{email}/{senha}", async (
+                dct8nq053j6k6dContext context, string email, string senha) => {
+                
+                var empresa = await context.TbEmpresas.FirstOrDefaultAsync(
+                    x=>x.NmEmail == email && x.CdSenhaEmpresa == senha);
+                
+                if(empresa is null)
+                    return Results.NotFound("Conta nao encontrada");
+                
+                var pontos = await context.TbPontoColeta.FirstOrDefaultAsync(
+                    x=>x.FkCdEmpresa == empresa.CdEmpresa);
+                
+                if(pontos is null)
+                    return Results.NoContent();
+                else
+                    return Results.Ok(pontos);
+            });
+
+            // criar ponto 
+            app.MapPost("/pontos/criar/{id}", async (
+                dct8nq053j6k6dContext context,[FromBody]PontosViewModel pontosView, int id) => {
+                
+                var empresa = await context.TbEmpresas.FirstOrDefaultAsync(
+                    x=>x.CdEmpresa == id);
+            
+                if(pontosView is null || empresa is null)
+                    return Results.BadRequest();
+                
+                try{
+                    await context.TbPontoColeta.AddAsync(
+                        new TbPontoColetum(){
+                            CdLatitudePonto = pontosView.CdLatitudePonto,
+                            CdLongitudePonto = pontosView.CdLongitudePonto,
+                            NmLogradouro = pontosView.NmLogradouro,
+                            NmPonto = pontosView.NmPonto,
+                            FkCdEmpresa = ID.newID(ID.Tabela.ponto)
+                        }
+                    );
+                    await context.SaveChangesAsync();
+                    return Results.Ok();
+                }
+                catch
+                {
+                    return Results.BadRequest();
+                }
+            });
+            
+            // alterar ponto
+            app.MapPut("/pontos/alterar/{id}/{nome}/{logradouro}", async (
+                dct8nq053j6k6dContext context, int id, string nome, string logradouro)=>{
+    
+                var ponto = await context.TbPontoColeta.FirstOrDefaultAsync(
+                    x=>x.CdPontoColeta == id);
+
+                if(ponto is null)
+                    return Results.NotFound();
+
+                try
+                {
+                    ponto.NmLogradouro = logradouro;
+                    ponto.NmPonto = nome;
+                    context.TbPontoColeta.Update(ponto);
+                    await context.SaveChangesAsync();
+                    return Results.Ok();
+                }
+                catch (System.Exception)
+                {
+                    
+                    throw;
+                }
+            });
+            
+            // deletar ponto
+            app.MapDelete("/pontos/deletar/{id}", async (dct8nq053j6k6dContext context, int id) => {               
+                var ponto = await context.TbPontoColeta.FirstOrDefaultAsync(
+                    x=>x.CdPontoColeta == id);
+
+                if(ponto is null)
+                    return Results.NotFound();
+
+                try{
+                    context.TbPontoColeta.Remove(ponto);
+                    await context.SaveChangesAsync();
+                    return Results.Ok();
+                }
+                catch{return Results.BadRequest();}
+            });
+
         }
     }
 }

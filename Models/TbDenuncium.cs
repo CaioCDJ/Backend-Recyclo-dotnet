@@ -8,7 +8,7 @@ namespace Backend_Recyclo_dotnet.Models
         public int CdDenuncia { get; set; }
         public string? NmLogradouro { get; set; }
         public string? DsComentario { get; set; }
-        [Column(TypeName="DateOnly")]
+        [Column(TypeName="Date")]
         public DateTime? DtDenuncia { get; set; }
         public int FkCdDiscarteIlegal { get; set; }
         public int FkCdUsuario { get; set; }
